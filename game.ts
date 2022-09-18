@@ -71,7 +71,7 @@ const takeFromDeck = (_deckCards: Card[], _handCards: Card[], nbCardsInHand: num
     let allCamel = true;
     // check if taking only camels
     for (let card of _deckCards) {
-        if (card.cardType != "camel-card") {
+        if (card.cardType != CardType.Camel) {
             allCamel = false;
             break
         }
@@ -107,13 +107,13 @@ const sell = (_deckCards: Card[], _handCards: Card[], nbSelectedCamels: number):
         if (sale.type != "" && card.cardType != sale.type) {
             return [_deckCards, _handCards, "can only sell one type of merchandise in one turn", sale];
         }
-        if (sale.type == "") {
+        if (sale.type == CardType.Undefined) {
             sale.type = card.cardType;
             sale.qty = 1;
         }
         sale.qty += 1;
     }
-    if (sale.type == "camel-card") {
+    if (sale.type == CardType.Camel) {
         return [_deckCards, _handCards, "cannot sell camels", sale];
     }
     if (sale.qty < (saleQuotas.get(sale.type) as number)) {
@@ -122,17 +122,25 @@ const sell = (_deckCards: Card[], _handCards: Card[], nbSelectedCamels: number):
     return [_deckCards, [], "", sale];
 }
 
-export const action = (_deckCards: Card[], _handCards: Card[], nbSelectedCamels: number): {
+export interface GameAction {
+    deckCards: Card[];
+    handCards: Card[];
+    nbSelectedCamels: number;
+};
+
+export interface ActionResult {
     deck: Card[], 
     hand: Card[],
     errorMsg: string,
     consumedCamels: number,
     selling: Sale, 
-} => {
-    let selectedDeck = _deckCards.filter(card => card.selected);
-    let selectedHand = _handCards.filter(card => card.selected);
-    let remainingDeck = _deckCards.filter(card => !card.selected);
-    let remainingHand = _handCards.filter(card => !card.selected);
+};
+
+export const action = (gameAction: GameAction): ActionResult => {
+    let selectedDeck = gameAction.deckCards.filter(card => card.selected);
+    let selectedHand = gameAction.handCards.filter(card => card.selected);
+    let remainingDeck = gameAction.deckCards.filter(card => !card.selected);
+    let remainingHand = gameAction.handCards.filter(card => !card.selected);
     let putInDeck = [] as Card[];
     let putInHand = [] as Card[];
     let errorMsg = "";
@@ -142,15 +150,15 @@ export const action = (_deckCards: Card[], _handCards: Card[], nbSelectedCamels:
         qty: 0,
     }
     if (selectedDeck.length > 0 && selectedHand.length > 0) {
-        [putInDeck, putInHand, errorMsg, consumedCamels] = exchange(selectedDeck, selectedHand, nbSelectedCamels);
+        [putInDeck, putInHand, errorMsg, consumedCamels] = exchange(selectedDeck, selectedHand, gameAction.nbSelectedCamels);
         console.log("exchange", putInDeck, putInHand);
     }
     else if (selectedDeck.length > 0) {
-        [putInDeck, putInHand, errorMsg, consumedCamels] = takeFromDeck(selectedDeck, selectedHand, _handCards.length);
+        [putInDeck, putInHand, errorMsg, consumedCamels] = takeFromDeck(selectedDeck, selectedHand, gameAction.handCards.length);
         console.log("takeFromDeck", putInDeck, putInHand);
     }
     else if (selectedHand.length > 0) {
-        [putInDeck, putInHand, errorMsg, selling] = sell(selectedDeck, selectedHand, nbSelectedCamels);
+        [putInDeck, putInHand, errorMsg, selling] = sell(selectedDeck, selectedHand, gameAction.nbSelectedCamels);
         console.log("sell", putInDeck, putInHand);
     }
     if (errorMsg != "") {
@@ -163,4 +171,4 @@ export const action = (_deckCards: Card[], _handCards: Card[], nbSelectedCamels:
         consumedCamels,
         selling,
     };
-}
+};

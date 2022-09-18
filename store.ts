@@ -5,11 +5,17 @@ export interface PlayerState {
     nbCamels: number;
 }
 
+export enum Player {
+    Player1 = "1",
+    Player2 = "2",
+}
+
 export interface GameState {
     player1State: PlayerState;
     player2State: PlayerState;
     deck: Card[];
     board: Card[];
+    nextPlayerPlaying: Player;
 }
 
 export const store = new Map<string, GameState>();
@@ -44,6 +50,7 @@ export const startGame = (gameIndex: string): GameState|Error => {
         } as PlayerState,
         deck,
         board: boardCards,
+        nextPlayerPlaying: Player.Player1,
     } as GameState;
     store.set(gameIndex, gameState);
     return { ...gameState, deck: [] as Card[]}; //send the game state (except the deck because the players aren't supposed to know it)
