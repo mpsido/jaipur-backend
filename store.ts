@@ -18,7 +18,8 @@ export const getGame = (gameIndex: string): GameState|Error => {
     if (!store.has(gameIndex)) {
         return new Error("Game does not exists");
     }
-    return store.get(gameIndex) as GameState;
+    const gameState = store.get(gameIndex) as GameState;
+    return { ...gameState, deck: [] as Card[]}; //send the game state (except the deck because the players aren't supposed to know it)
 };
 
 export const startGame = (gameIndex: string): GameState|Error => {
