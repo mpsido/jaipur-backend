@@ -68,7 +68,7 @@ app.post('/:gameId/:playerId', (req: Request, res: Response) => {
   console.log(req.body);
   const actionResult = action(req.body);
   console.log(actionResult);
-  res.send(`POST Request Called ${player}`);
+  res.json(actionResult);
 });
 
 app.listen(port, () => {
