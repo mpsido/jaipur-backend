@@ -1,8 +1,8 @@
 import express, { Express, Request, Response } from 'express';
 import dotenv from 'dotenv';
 import bodyParser from 'body-parser';
-import { startGame, getGame, GameState, Player } from "./store";
-import { GameAction, action } from "./game";
+import { store, startGame, getGame, GameState, Player } from "./store";
+import { action, drawCards } from "./game";
 import cors from 'cors';
 
 dotenv.config();
@@ -55,19 +55,41 @@ app.get('/start/:gameId', (req: Request, res: Response) => {
 });
 
 app.post('/:gameId/:playerId', (req: Request, res: Response) => {
-  const game = getGame(req.params.gameId);
-  if (game instanceof Error) {
-    res.status(404).send((game as Error).message);
+  const gameState = store.get(req.params.gameId);
+  if (!gameState) {
+    res.status(404).send(`could not find game ${req.params.gameId}`);
     return;
   }
   const player = req.params.playerId;
-  if (player as Player != game.nextPlayerPlaying) {
+  if (player as Player != gameState.nextPlayerPlaying) {
     res.status(404).send("Not your turn");
     return;
   }
   console.log(req.body);
   const actionResult = action(req.body);
   console.log(actionResult);
+
+  if (actionResult.errorMsg != "") {
+    res.status(404).send(actionResult.errorMsg);
+    return;
+  }
+  gameState.board = actionResult.board;
+  switch (gameState.nextPlayerPlaying) {
+    case Player.Player1:
+      gameState.player1State.cards = actionResult.hand;
+      break;
+    case Player.Player2:
+      gameState.player2State.cards = actionResult.hand;
+      break;
+  }
+  if (gameState.board.length < 5) {
+    let [extraCards, deck] = drawCards(gameState.deck, 5 - gameState.board.length);
+    console.log("Add to deck", extraCards, gameState.board);
+    gameState.deck = deck;
+    gameState.board = [...gameState.board, ...extraCards];
+    gameState.nextPlayerPlaying = gameState.nextPlayerPlaying == Player.Player1 ? Player.Player2 : Player.Player1;
+    store.set(req.params.gameId, gameState);
+  }
   res.json(actionResult);
 });
 

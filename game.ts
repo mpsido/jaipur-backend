@@ -1,3 +1,4 @@
+import { GameState } from "./store";
 import { shuffleArray } from "./util";
 
 enum CardType {
@@ -56,21 +57,21 @@ export function drawCards(deck: Card[], n: number): [Card[], Card[]] {
     return [deck.slice(0, n), deck.slice(n)];
 };
 
-const exchange = (_deckCards: Card[], _handCards: Card[], nbSelectedCamels: number): [Card[], Card[], string, number] => {
-    if (_deckCards.length != (_handCards.length + nbSelectedCamels)) {
-        return [_deckCards, _handCards, "need to exchange same number of cards", 0];
+const exchange = (_boardCards: Card[], _handCards: Card[], nbSelectedCamels: number): [Card[], Card[], string, number] => {
+    if (_boardCards.length != (_handCards.length + nbSelectedCamels)) {
+        return [_boardCards, _handCards, "need to exchange same number of cards", 0];
     }
-    return [_handCards, _deckCards, "", nbSelectedCamels];
+    return [_handCards, _boardCards, "", nbSelectedCamels];
 };
 
-const takeFromDeck = (_deckCards: Card[], _handCards: Card[], nbCardsInHand: number): [Card[], Card[], string, number] => {
+const takeFromDeck = (_boardCards: Card[], _handCards: Card[], nbCardsInHand: number): [Card[], Card[], string, number] => {
     if (_handCards.length > 0) {
-        console.log("Hand", _deckCards);
-        return [_deckCards, _handCards, "cannot take from deck when hand cards are selected", 0];
+        console.log("Hand", _boardCards);
+        return [_boardCards, _handCards, "cannot take from deck when hand cards are selected", 0];
     }
     let allCamel = true;
     // check if taking only camels
-    for (let card of _deckCards) {
+    for (let card of _boardCards) {
         if (card.cardType != CardType.Camel) {
             allCamel = false;
             break
@@ -78,34 +79,34 @@ const takeFromDeck = (_deckCards: Card[], _handCards: Card[], nbCardsInHand: num
     }
     // taking camels
     if (allCamel) {
-        return [[], _handCards, "", -_deckCards.length];
+        return [[], _handCards, "", -_boardCards.length];
     }
     // if taking cards
-    if (_deckCards.length > 3) {
-        return [_deckCards, _handCards, "taking too much cards", 0];
+    if (_boardCards.length > 3) {
+        return [_boardCards, _handCards, "taking too much cards", 0];
 
     }
-    if (nbCardsInHand + _deckCards.length > maxCardsInHand) {
-        return [_deckCards, _handCards, "that would be too much cards in hand", 0];
+    if (nbCardsInHand + _boardCards.length > maxCardsInHand) {
+        return [_boardCards, _handCards, "that would be too much cards in hand", 0];
     }
     // take cards
-    return [[], [..._deckCards, ..._handCards], "", 0];
+    return [[], [..._boardCards, ..._handCards], "", 0];
 }
 
-const sell = (_deckCards: Card[], _handCards: Card[], nbSelectedCamels: number): [Card[], Card[], string, Sale] => {
+const sell = (_boardCards: Card[], _handCards: Card[], nbSelectedCamels: number): [Card[], Card[], string, Sale] => {
     let sale = {
         type: "" as CardType,
         qty: 0,
     } as Sale;
     if (nbSelectedCamels > 0) {
-        return [_deckCards, _handCards, "cannot sell camels", sale];
+        return [_boardCards, _handCards, "cannot sell camels", sale];
     }
-    if (_deckCards.length > 0) {
-        return [_deckCards, _handCards, "cannot sell deck cards", sale];
+    if (_boardCards.length > 0) {
+        return [_boardCards, _handCards, "cannot sell deck cards", sale];
     }
     for (let card of _handCards) {
         if (sale.type != "" && card.cardType != sale.type) {
-            return [_deckCards, _handCards, "can only sell one type of merchandise in one turn", sale];
+            return [_boardCards, _handCards, "can only sell one type of merchandise in one turn", sale];
         }
         if (sale.type == CardType.Undefined) {
             sale.type = card.cardType;
@@ -114,22 +115,22 @@ const sell = (_deckCards: Card[], _handCards: Card[], nbSelectedCamels: number):
         sale.qty += 1;
     }
     if (sale.type == CardType.Camel) {
-        return [_deckCards, _handCards, "cannot sell camels", sale];
+        return [_boardCards, _handCards, "cannot sell camels", sale];
     }
     if (sale.qty < (saleQuotas.get(sale.type) as number)) {
-        return [_deckCards, _handCards, "not selling enough", sale];
+        return [_boardCards, _handCards, "not selling enough", sale];
     }
-    return [_deckCards, [], "", sale];
+    return [_boardCards, [], "", sale];
 }
 
 export interface GameAction {
-    deckCards: Card[];
+    boardCards: Card[];
     handCards: Card[];
     nbSelectedCamels: number;
 };
 
 export interface ActionResult {
-    deck: Card[], 
+    board: Card[], 
     hand: Card[],
     errorMsg: string,
     consumedCamels: number,
@@ -137,9 +138,9 @@ export interface ActionResult {
 };
 
 export const action = (gameAction: GameAction): ActionResult => {
-    let selectedDeck = gameAction.deckCards.filter(card => card.selected);
+    let selectedDeck = gameAction.boardCards.filter(card => card.selected);
     let selectedHand = gameAction.handCards.filter(card => card.selected);
-    let remainingDeck = gameAction.deckCards.filter(card => !card.selected);
+    let remainingBoard = gameAction.boardCards.filter(card => !card.selected);
     let remainingHand = gameAction.handCards.filter(card => !card.selected);
     let putInDeck = [] as Card[];
     let putInHand = [] as Card[];
@@ -164,11 +165,12 @@ export const action = (gameAction: GameAction): ActionResult => {
     if (errorMsg != "") {
         alert(errorMsg);
     }
-    return {
-        deck: [...remainingDeck, ...putInDeck],
+    const actionResult = {
+        board: [...remainingBoard, ...putInDeck],
         hand: [...remainingHand, ...putInHand], 
         errorMsg, 
         consumedCamels,
         selling,
-    };
+    } as ActionResult;
+    return actionResult;
 };
