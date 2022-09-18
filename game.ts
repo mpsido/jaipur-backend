@@ -1,4 +1,3 @@
-import { GameState } from "./store";
 import { shuffleArray } from "./util";
 
 enum CardType {
@@ -10,6 +9,18 @@ enum CardType {
     Leather = "leather-card",
     Camel = "camel-card",
     Undefined = "",
+}
+
+enum TokenType {
+    Diamond = "diamond-token",
+    Gold = "gold-token",
+    Silver = "silver-token",
+    Cloth = "cloth-token",
+    Spice = "spice-token",
+    Leather = "leather-token",
+    Bonus3 = "bonus3-token",
+    Bonus4 = "bonus4-token",
+    Bonus5 = "bonus5-token",
 }
 
 export interface Card {
@@ -40,6 +51,18 @@ const saleQuotas: Map<CardType, number> = new Map<CardType, number>([
     ["cloth-card" as CardType, 3],
     ["spice-card" as CardType, 4],
     ["leather-card" as CardType, 4],
+]);
+
+export const tokenValues: Map<TokenType, number[]> = new Map<TokenType, number[]>([
+    [TokenType.Diamond, [7, 7, 5, 5, 5]],
+    [TokenType.Gold, [6, 6, 5, 5, 5]],
+    [TokenType.Silver, [5, 5, 5, 5, 5]],
+    [TokenType.Cloth, [5, 3, 3, 2, 2, 1, 1]],
+    [TokenType.Spice, [5, 3, 3, 2, 2, 1, 1]],
+    [TokenType.Leather, [4, 3, 2, 1, 1, 1, 1, 1, 1]],
+    [TokenType.Bonus3, shuffleArray([4, 4, 3, 3, 2, 1])],
+    [TokenType.Bonus4, shuffleArray([6, 5, 4, 4, 3, 3])],
+    [TokenType.Bonus5, shuffleArray([8, 7, 6, 5, 4, 4])],
 ]);
 
 export function makeDeck(): Card[] {
