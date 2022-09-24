@@ -208,7 +208,7 @@ export const action = (gameAction: GameAction): ActionResult => {
         console.log("sell", putInDeck, putInHand);
     }
     if (errorMsg != "") {
-        alert(errorMsg);
+        console.log(errorMsg);
     }
     const actionResult = {
         board: [...remainingBoard, ...putInDeck],
@@ -231,6 +231,9 @@ export const obtainTokens = (sale: Sale, gameState: GameState): GameState|Error 
             break;
         case CardType.Silver:
             tokenType = TokenType.Silver;
+            break;
+        case CardType.Spice:
+            tokenType = TokenType.Spice;
             break;
         case CardType.Cloth:
             tokenType = TokenType.Cloth;
