@@ -4,6 +4,7 @@ import bodyParser from 'body-parser';
 import { store, startGame, getGame} from "./store";
 import { action, drawCards, GameState, Player, obtainTokens } from "./game";
 import cors from 'cors';
+import { sendWsMessage } from "./websocket";
 
 dotenv.config();
 
@@ -98,6 +99,7 @@ app.post('/:gameId/:playerId', (req: Request, res: Response) => {
   }
   gameState.nextPlayerPlaying = gameState.nextPlayerPlaying == Player.Player1 ? Player.Player2 : Player.Player1;
   store.set(req.params.gameId, gameState);
+  sendWsMessage(req.params.gameId, gameState);
   res.json(actionResult);
 });
 
