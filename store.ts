@@ -15,9 +15,11 @@ export const getGame = (gameIndex: string): GameState|Error => {
     if (!store.has(gameIndex)) {
         return new Error("Game does not exists");
     }
-    const gameState = store.get(gameIndex) as GameState;
+    const gameState = { ...store.get(gameIndex) } as GameState;
+    gameState.deck = [] as Card[];
+    console.log('getGame', gameState);
     // TODO hide the other player's cards
-    return { ...gameState, deck: [] as Card[]}; //send the game state (except the deck because the players aren't supposed to know it)
+    return gameState; //send the game state (except the deck because the players aren't supposed to know it)
 };
 
 export const startGame = (gameIndex: string): GameState|Error => {
@@ -31,17 +33,18 @@ export const startGame = (gameIndex: string): GameState|Error => {
     [player1Cards, deck] = drawCards(deck, 5);
     [player2Cards, deck] = drawCards(deck, 5);
     [boardCards, deck] = drawCards(deck, 5);
-    const zeroTokens = new Map<TokenType, number[]>([
-        [TokenType.Diamond, []],
-        [TokenType.Gold, []],
-        [TokenType.Silver, []],
-        [TokenType.Cloth, []],
-        [TokenType.Spice, []],
-        [TokenType.Leather, []],
-        [TokenType.Bonus3, []],
-        [TokenType.Bonus4, []],
-        [TokenType.Bonus5, []],
-    ]);
+    const zeroTokens = {
+        "diamond-token": [],
+        "gold-token": [],
+        "silver-token": [],
+        "cloth-token": [],
+        "spice-token": [],
+        "leather-token": [],
+        "bonus3-token": [],
+        "bonus4-token": [],
+        "bonus5-token": [],
+        "camel-token": [],
+    }
     const gameState = {
         player1State: {
             cards: player1Cards,

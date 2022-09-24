@@ -57,7 +57,7 @@ const saleQuotas: Map<CardType, number> = new Map<CardType, number>([
 export interface PlayerState {
     cards: Card[];
     nbCamels: number;
-    tokens: Map<TokenType, number[]>;
+    tokens: TokenInventory;
 }
 
 export enum Player {
@@ -65,28 +65,41 @@ export enum Player {
     Player2 = "2",
 }
 
+export interface TokenInventory {
+    "diamond-token": number[];
+    "gold-token": number[];
+    "silver-token": number[];
+    "cloth-token": number[];
+    "spice-token": number[];
+    "leather-token": number[];
+    "bonus3-token": number[];
+    "bonus4-token": number[];
+    "bonus5-token": number[];
+    "camel-token": number[];
+};
+
 export interface GameState {
     player1State: PlayerState; // TODO store the player state in an array
     player2State: PlayerState;
     deck: Card[]; // TODO the card selections should not be part of the game state
     board: Card[];
     nextPlayerPlaying: Player;
-    tokenBoard: Map<TokenType, number[]>;
+    tokenBoard: TokenInventory;
 }
 
-export function makeTokenBoard(): Map<TokenType, number[]> {
-    return new Map<TokenType, number[]>([
-        [TokenType.Diamond, [5, 5, 5, 7, 7]],
-        [TokenType.Gold, [5, 5, 5, 6, 6]],
-        [TokenType.Silver, [5, 5, 5, 5, 5]],
-        [TokenType.Cloth, [1, 1, 2, 2, 3, 3, 5]],
-        [TokenType.Spice, [1, 1, 2, 2, 3, 3, 5]],
-        [TokenType.Leather, [1, 1, 1, 1, 1, 1, 2, 3, 4]],
-        [TokenType.Bonus3, shuffleArray([4, 4, 3, 3, 2, 1])],
-        [TokenType.Bonus4, shuffleArray([6, 5, 4, 4, 3, 3])],
-        [TokenType.Bonus5, shuffleArray([8, 7, 6, 5, 4, 4])],
-        [TokenType.Camel, [5]],
-    ]);
+export function makeTokenBoard(): TokenInventory {
+    return {
+        "diamond-token": [5, 5, 5, 7, 7],
+        "gold-token": [5, 5, 5, 6, 6],
+        "silver-token": [5, 5, 5, 5, 5],
+        "cloth-token": [1, 1, 2, 2, 3, 3, 5],
+        "spice-token": [1, 1, 2, 2, 3, 3, 5],
+        "leather-token": [1, 1, 1, 1, 1, 1, 2, 3, 4],
+        "bonus3-token": shuffleArray([4, 4, 3, 3, 2, 1]),
+        "bonus4-token": shuffleArray([6, 5, 4, 4, 3, 3]),
+        "bonus5-token": shuffleArray([8, 7, 6, 5, 4, 4]),
+        "camel-token": [5],
+    };
 }
 
 export function makeDeck(): Card[] {
@@ -251,7 +264,7 @@ export const obtainTokens = (sale: Sale, gameState: GameState): GameState|Error 
     if (minSale === undefined) {
         return new Error(`Could not find sale quota for type ${sale.type}`);
     }
-    let playerTokens: Map<TokenType, number[]>;
+    let playerTokens: TokenInventory;
     switch (gameState.nextPlayerPlaying) {
         case Player.Player1:
             playerTokens = gameState.player1State.tokens;
@@ -263,8 +276,8 @@ export const obtainTokens = (sale: Sale, gameState: GameState): GameState|Error 
             return new Error(`Don't know which player is that: ${gameState.nextPlayerPlaying}`);
     }
     let playerTokensOfThisType: number[];
-    playerTokensOfThisType = playerTokens.get(tokenType) as number[];
-    let tokens = gameState.tokenBoard.get(tokenType);
+    playerTokensOfThisType = playerTokens[tokenType] as number[];
+    let tokens = gameState.tokenBoard[tokenType];
     if (tokens === undefined || tokens?.length === 0) {
         return new Error(`No token of type ${sale.type} to distribute`);
     }
@@ -279,7 +292,7 @@ export const obtainTokens = (sale: Sale, gameState: GameState): GameState|Error 
         let obtainedToken = tokens!.pop() as number;
         playerTokensOfThisType.push(obtainedToken);
     }
-    playerTokens.set(tokenType, playerTokensOfThisType);
+    playerTokens[tokenType] = playerTokensOfThisType;
     switch (gameState.nextPlayerPlaying) {
         case Player.Player1:
             gameState.player1State.tokens = playerTokens;
@@ -290,7 +303,7 @@ export const obtainTokens = (sale: Sale, gameState: GameState): GameState|Error 
         default:
             return new Error(`Don't know which player is that: ${gameState.nextPlayerPlaying}`);
     }
-    gameState.tokenBoard.set(tokenType, tokens as number[]);
+    gameState.tokenBoard[tokenType] = tokens as number[];
     console.log("Updated tokenBoard", gameState.tokenBoard);
     return gameState;
 };
