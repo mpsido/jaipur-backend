@@ -139,6 +139,7 @@ const takeFromDeck = (_boardCards: Card[], _handCards: Card[], nbCardsInHand: nu
     }
     // taking camels
     if (allCamel) {
+        // TODO if taking camels: need to take all the camels in the board
         return [[], _handCards, "", -_boardCards.length];
     }
     // if taking cards
