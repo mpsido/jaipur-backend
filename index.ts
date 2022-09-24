@@ -74,6 +74,8 @@ app.post('/:gameId/:playerId', (req: Request, res: Response) => {
     res.status(404).send(actionResult.errorMsg);
     return;
   }
+
+  // TODO wrap all this in a game function
   gameState.board = actionResult.board;
   switch (gameState.nextPlayerPlaying) {
     case Player.Player1:
@@ -107,7 +109,7 @@ app.post('/:gameId/:playerId', (req: Request, res: Response) => {
   }
   gameState.nextPlayerPlaying = gameState.nextPlayerPlaying == Player.Player1 ? Player.Player2 : Player.Player1;
   store.set(req.params.gameId, gameState);
-  sendWsMessage(req.params.gameId, gameState);
+  sendWsMessage(req.params.gameId, getGame(req.params.gameId));
   res.json(actionResult);
 });
 

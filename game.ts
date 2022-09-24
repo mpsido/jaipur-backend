@@ -66,9 +66,9 @@ export enum Player {
 }
 
 export interface GameState {
-    player1State: PlayerState;
+    player1State: PlayerState; // TODO store the player state in an array
     player2State: PlayerState;
-    deck: Card[];
+    deck: Card[]; // TODO the card selections should not be part of the game state
     board: Card[];
     nextPlayerPlaying: Player;
     tokenBoard: Map<TokenType, number[]>;
@@ -185,6 +185,7 @@ export interface ActionResult {
 };
 
 export const action = (gameAction: GameAction): ActionResult => {
+    // TODO verify that the selected cards are in the player's hands and b
     let selectedDeck = gameAction.boardCards.filter(card => card.selected);
     let selectedHand = gameAction.handCards.filter(card => card.selected);
     let remainingBoard = gameAction.boardCards.filter(card => !card.selected);
@@ -290,5 +291,6 @@ export const obtainTokens = (sale: Sale, gameState: GameState): GameState|Error 
             return new Error(`Don't know which player is that: ${gameState.nextPlayerPlaying}`);
     }
     gameState.tokenBoard.set(tokenType, tokens as number[]);
+    console.log("Updated tokenBoard", gameState.tokenBoard);
     return gameState;
 };

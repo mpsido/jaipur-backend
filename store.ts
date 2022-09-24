@@ -16,6 +16,7 @@ export const getGame = (gameIndex: string): GameState|Error => {
         return new Error("Game does not exists");
     }
     const gameState = store.get(gameIndex) as GameState;
+    // TODO hide the other player's cards
     return { ...gameState, deck: [] as Card[]}; //send the game state (except the deck because the players aren't supposed to know it)
 };
 
@@ -58,5 +59,5 @@ export const startGame = (gameIndex: string): GameState|Error => {
         tokenBoard: makeTokenBoard(),
     } as GameState;
     store.set(gameIndex, gameState);
-    return { ...gameState, deck: [] as Card[]}; //send the game state (except the deck because the players aren't supposed to know it)
+    return getGame(gameIndex);
 }
