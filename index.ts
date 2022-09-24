@@ -97,6 +97,14 @@ app.post('/:gameId/:playerId', (req: Request, res: Response) => {
     gameState.deck = deck;
     gameState.board = [...gameState.board, ...extraCards];
   }
+  switch (gameState.nextPlayerPlaying) {
+    case Player.Player1:
+      gameState.player1State.nbCamels -= actionResult.consumedCamels;
+      break;
+    case Player.Player2:
+      gameState.player2State.nbCamels -= actionResult.consumedCamels;
+      break;
+  }
   gameState.nextPlayerPlaying = gameState.nextPlayerPlaying == Player.Player1 ? Player.Player2 : Player.Player1;
   store.set(req.params.gameId, gameState);
   sendWsMessage(req.params.gameId, gameState);
