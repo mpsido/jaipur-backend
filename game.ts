@@ -225,12 +225,16 @@ export const action = (gameAction: GameAction): ActionResult => {
         [putInDeck, putInHand, errorMsg, selling] = sell(selectedDeck, selectedHand, gameAction.nbSelectedCamels);
         console.log("sell", putInDeck, putInHand);
     }
+    const newHand = [...remainingHand, ...putInHand];
+    if (newHand.length > maxCardsInHand) {
+        errorMsg = `Cannot have more than ${maxCardsInHand} cards in hand`;
+    }
     if (errorMsg != "") {
         console.log(errorMsg);
     }
     const actionResult = {
         board: [...remainingBoard, ...putInDeck],
-        hand: [...remainingHand, ...putInHand], 
+        hand: newHand, 
         errorMsg, 
         consumedCamels,
         selling,
