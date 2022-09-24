@@ -11,7 +11,7 @@ enum CardType {
     Undefined = "",
 }
 
-enum TokenType {
+export enum TokenType {
     Diamond = "diamond-token",
     Gold = "gold-token",
     Silver = "silver-token",
@@ -53,17 +53,39 @@ const saleQuotas: Map<CardType, number> = new Map<CardType, number>([
     ["leather-card" as CardType, 4],
 ]);
 
-export const tokenValues: Map<TokenType, number[]> = new Map<TokenType, number[]>([
-    [TokenType.Diamond, [7, 7, 5, 5, 5]],
-    [TokenType.Gold, [6, 6, 5, 5, 5]],
-    [TokenType.Silver, [5, 5, 5, 5, 5]],
-    [TokenType.Cloth, [5, 3, 3, 2, 2, 1, 1]],
-    [TokenType.Spice, [5, 3, 3, 2, 2, 1, 1]],
-    [TokenType.Leather, [4, 3, 2, 1, 1, 1, 1, 1, 1]],
-    [TokenType.Bonus3, shuffleArray([4, 4, 3, 3, 2, 1])],
-    [TokenType.Bonus4, shuffleArray([6, 5, 4, 4, 3, 3])],
-    [TokenType.Bonus5, shuffleArray([8, 7, 6, 5, 4, 4])],
-]);
+export interface PlayerState {
+    cards: Card[];
+    nbCamels: number;
+    tokens: Map<TokenType, number[]>;
+}
+
+export enum Player {
+    Player1 = "1",
+    Player2 = "2",
+}
+
+export interface GameState {
+    player1State: PlayerState;
+    player2State: PlayerState;
+    deck: Card[];
+    board: Card[];
+    nextPlayerPlaying: Player;
+    tokenBoard: Map<TokenType, number[]>;
+}
+
+export function makeTokenBoard(): Map<TokenType, number[]> {
+    return new Map<TokenType, number[]>([
+        [TokenType.Diamond, [5, 5, 5, 7, 7]],
+        [TokenType.Gold, [5, 5, 5, 6, 6]],
+        [TokenType.Silver, [5, 5, 5, 5, 5]],
+        [TokenType.Cloth, [1, 1, 2, 2, 3, 3, 5]],
+        [TokenType.Spice, [1, 1, 2, 2, 3, 3, 5]],
+        [TokenType.Leather, [1, 1, 1, 1, 1, 1, 2, 3, 4]],
+        [TokenType.Bonus3, shuffleArray([4, 4, 3, 3, 2, 1])],
+        [TokenType.Bonus4, shuffleArray([6, 5, 4, 4, 3, 3])],
+        [TokenType.Bonus5, shuffleArray([8, 7, 6, 5, 4, 4])],
+    ]);
+}
 
 export function makeDeck(): Card[] {
     let deck = [] as Card[];
@@ -196,4 +218,65 @@ export const action = (gameAction: GameAction): ActionResult => {
         selling,
     } as ActionResult;
     return actionResult;
+};
+
+export const obtainTokens = (sale: Sale, gameState: GameState): GameState|Error => {
+    let tokenType: TokenType;
+    switch (sale.type) {
+        case CardType.Diamond:
+            tokenType = TokenType.Diamond;
+            break;
+        case CardType.Gold:
+            tokenType = TokenType.Gold;
+            break;
+        case CardType.Silver:
+            tokenType = TokenType.Silver;
+            break;
+        case CardType.Cloth:
+            tokenType = TokenType.Cloth;
+            break;
+        case CardType.Leather:
+            tokenType = TokenType.Leather;
+            break;
+        default:
+            return new Error(`Cannot sell card of type ${sale.type}`);
+    }
+    let playerTokens: Map<TokenType, number[]>;
+    switch (gameState.nextPlayerPlaying) {
+        case Player.Player1:
+            playerTokens = gameState.player1State.tokens;
+            break;
+        case Player.Player2:
+            playerTokens = gameState.player2State.tokens;
+            break;
+        default:
+            return new Error(`Don't know which player is that: ${gameState.nextPlayerPlaying}`);
+    }
+    let playerTokensOfThisType: number[];
+    playerTokensOfThisType = playerTokens.get(tokenType) as number[];
+    let tokens = gameState.tokenBoard.get(tokenType);
+    if (tokens === undefined || tokens?.length === 0) {
+        return new Error(`No token of type ${sale.type} to distribute`);
+    }
+    for (let i = 0; i < sale.qty; i++) {
+        if (tokens.length === 0) {
+            console.log("No more tokens to distribute");
+            break;
+        }
+        let obtainedToken = tokens!.pop() as number;
+        playerTokensOfThisType.push(obtainedToken);
+    }
+    playerTokens.set(tokenType, playerTokensOfThisType);
+    switch (gameState.nextPlayerPlaying) {
+        case Player.Player1:
+            gameState.player1State.tokens = playerTokens;
+            break;
+        case Player.Player2:
+            gameState.player2State.tokens = playerTokens;
+            break;
+        default:
+            return new Error(`Don't know which player is that: ${gameState.nextPlayerPlaying}`);
+    }
+    gameState.tokenBoard.set(tokenType, tokens as number[]);
+    return gameState;
 };

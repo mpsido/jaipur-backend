@@ -1,8 +1,8 @@
 import express, { Express, Request, Response } from 'express';
 import dotenv from 'dotenv';
 import bodyParser from 'body-parser';
-import { store, startGame, getGame, GameState, Player } from "./store";
-import { action, drawCards } from "./game";
+import { store, startGame, getGame} from "./store";
+import { action, drawCards, GameState, Player, obtainTokens } from "./game";
 import cors from 'cors';
 
 dotenv.config();
@@ -55,7 +55,7 @@ app.get('/start/:gameId', (req: Request, res: Response) => {
 });
 
 app.post('/:gameId/:playerId', (req: Request, res: Response) => {
-  const gameState = store.get(req.params.gameId);
+  let gameState = store.get(req.params.gameId);
   if (!gameState) {
     res.status(404).send(`could not find game ${req.params.gameId}`);
     return;
@@ -82,14 +82,22 @@ app.post('/:gameId/:playerId', (req: Request, res: Response) => {
       gameState.player2State.cards = actionResult.hand;
       break;
   }
+  if (actionResult.selling.qty > 0) {
+    let gsOrError = obtainTokens(actionResult.selling, gameState);
+    if (gsOrError instanceof Error) {
+      res.status(404).send((gsOrError as Error).message);
+      return;
+    }
+    gameState = gsOrError as GameState;
+  }
   if (gameState.board.length < 5) {
     let [extraCards, deck] = drawCards(gameState.deck, 5 - gameState.board.length);
     console.log("Add to deck", extraCards, gameState.board);
     gameState.deck = deck;
     gameState.board = [...gameState.board, ...extraCards];
     gameState.nextPlayerPlaying = gameState.nextPlayerPlaying == Player.Player1 ? Player.Player2 : Player.Player1;
-    store.set(req.params.gameId, gameState);
   }
+  store.set(req.params.gameId, gameState);
   res.json(actionResult);
 });
 
