@@ -171,6 +171,7 @@ const sell = (_boardCards: Card[], _handCards: Card[], nbSelectedCamels: number)
         if (sale.type == CardType.Undefined) {
             sale.type = card.cardType;
             sale.qty = 1;
+            continue;
         }
         sale.qty += 1;
     }
