@@ -241,6 +241,10 @@ export const obtainTokens = (sale: Sale, gameState: GameState): GameState|Error 
         default:
             return new Error(`Cannot sell card of type ${sale.type}`);
     }
+    const minSale = saleQuotas.get(sale.type);
+    if (minSale === undefined) {
+        return new Error(`Could not find sale quota for type ${sale.type}`);
+    }
     let playerTokens: Map<TokenType, number[]>;
     switch (gameState.nextPlayerPlaying) {
         case Player.Player1:
@@ -257,6 +261,9 @@ export const obtainTokens = (sale: Sale, gameState: GameState): GameState|Error 
     let tokens = gameState.tokenBoard.get(tokenType);
     if (tokens === undefined || tokens?.length === 0) {
         return new Error(`No token of type ${sale.type} to distribute`);
+    }
+    if (sale.qty < minSale) {
+        return new Error(`Need to sell at least ${minSale}`);
     }
     for (let i = 0; i < sale.qty; i++) {
         if (tokens.length === 0) {
