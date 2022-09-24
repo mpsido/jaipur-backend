@@ -95,8 +95,8 @@ app.post('/:gameId/:playerId', (req: Request, res: Response) => {
     console.log("Add to deck", extraCards, gameState.board);
     gameState.deck = deck;
     gameState.board = [...gameState.board, ...extraCards];
-    gameState.nextPlayerPlaying = gameState.nextPlayerPlaying == Player.Player1 ? Player.Player2 : Player.Player1;
   }
+  gameState.nextPlayerPlaying = gameState.nextPlayerPlaying == Player.Player1 ? Player.Player2 : Player.Player1;
   store.set(req.params.gameId, gameState);
   res.json(actionResult);
 });
