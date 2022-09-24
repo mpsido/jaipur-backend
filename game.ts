@@ -21,6 +21,7 @@ export enum TokenType {
     Bonus3 = "bonus3-token",
     Bonus4 = "bonus4-token",
     Bonus5 = "bonus5-token",
+    Camel = "camel-token",
 }
 
 export interface Card {
@@ -84,6 +85,7 @@ export function makeTokenBoard(): Map<TokenType, number[]> {
         [TokenType.Bonus3, shuffleArray([4, 4, 3, 3, 2, 1])],
         [TokenType.Bonus4, shuffleArray([6, 5, 4, 4, 3, 3])],
         [TokenType.Bonus5, shuffleArray([8, 7, 6, 5, 4, 4])],
+        [TokenType.Camel, [5]],
     ]);
 }
 
