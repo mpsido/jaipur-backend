@@ -383,6 +383,24 @@ export const obtainTokens = (sale: Sale, gameState: GameState): GameState|Error 
         playerTokensOfThisType.push(obtainedToken);
     }
     playerTokens[tokenType] = playerTokensOfThisType;
+    const distributeBonusToken = (bonusType: TokenType) => {
+        let tokenValue = gameState.tokenBoard[bonusType].pop();
+        if (tokenValue === undefined) {
+            console.log(`No more ${bonusType}`);
+        } else {
+            playerTokens[bonusType].push(tokenValue as number);
+        }
+    }
+    if (sale.qty == 3) {
+        // add a bonus token 3
+        distributeBonusToken(TokenType.Bonus3);
+    } else if (sale.qty == 4) {
+        // add a bonus token 4
+        distributeBonusToken(TokenType.Bonus4);
+    } else if (sale.qty >= 5) {
+        // add a bonus token 5
+        distributeBonusToken(TokenType.Bonus5);
+    }
     gameState.setCurrentPlayerTokens(playerTokens);
     gameState.tokenBoard[tokenType] = tokens as number[];
     console.log("Updated tokenBoard", gameState.tokenBoard);
