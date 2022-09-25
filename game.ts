@@ -233,24 +233,6 @@ const takeFromDeck = (_boardCards: Card[], _handCards: Card[], nbCardsInHand: nu
         console.log("Hand", _boardCards);
         return [_boardCards, _handCards, "cannot take from deck when hand cards are selected", 0];
     }
-    let allCamel = true;
-    // check if taking only camels
-    for (let card of _boardCards) {
-        if (card.cardType != CardType.Camel) {
-            allCamel = false;
-            break
-        }
-    }
-    // taking camels
-    if (allCamel) {
-        // TODO if taking camels: need to take all the camels in the board
-        return [[], _handCards, "", -_boardCards.length];
-    }
-    // if taking cards
-    if (_boardCards.length > 3) {
-        return [_boardCards, _handCards, "taking too much cards", 0];
-
-    }
     if (nbCardsInHand + _boardCards.length > maxCardsInHand) {
         return [_boardCards, _handCards, "that would be too much cards in hand", 0];
     }
