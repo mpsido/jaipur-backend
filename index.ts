@@ -29,7 +29,8 @@ let corsOptions = {
     if(!origin) return callback(null, true);
     if(allowedOrigins.indexOf(origin) === -1){
       var msg = 'The CORS policy for this site does not ' +
-                'allow access from the specified Origin.' + origin;
+                'allow access from the specified Origin.' + `Origin is ${origin}`;
+      console.log(msg);
       return callback(new Error(msg), false);
     }
     return callback(null, true);
