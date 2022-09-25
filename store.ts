@@ -37,7 +37,6 @@ export const getGame = (gameIndex: string, player: number): GameState|Error => {
             gameState.playersState[1],
         ];
     }
-    console.log('getGame', gameState);
     return {
         ...gameState,
         deck: [] as Card[],

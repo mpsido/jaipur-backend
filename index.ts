@@ -62,9 +62,10 @@ app.get('/start/:gameId', (req: Request, res: Response) => {
 });
 
 app.post('/:gameId/:playerId', (req: Request, res: Response) => {
-  let gameState = store.get(req.params.gameId);
+  const gameId = req.params.gameId;
+  let gameState = store.get(gameId);
   if (!gameState) {
-    res.status(404).send(`could not find game ${req.params.gameId}`);
+    res.status(404).send(`could not find game ${gameId}`);
     return;
   }
   if (gameState.gameOver) {
@@ -130,8 +131,10 @@ app.post('/:gameId/:playerId', (req: Request, res: Response) => {
       playerState.computeScore();
     });
   }
-  store.set(req.params.gameId, gameState);
-  sendWsMessage(req.params.gameId, getGame(req.params.gameId, parseInt(req.params.playerId)));
+  store.set(gameId, gameState);
+  let playerIdx = parseInt(player);
+  sendWsMessage(gameId, playerIdx, getGame(gameId, playerIdx % 2));
+  sendWsMessage(gameId, playerIdx == 1 ? 2 : 1, getGame(gameId, playerIdx - 1));
   res.json(actionResult);
 });
 
