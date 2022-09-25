@@ -21,7 +21,7 @@ const app: Express = express();
 const port = process.env.PORT;
 
 app.use(bodyParser.json());
-var allowedOrigins = ['http://127.0.0.1:5173', 'http://localhost:5173', 'http://localhost:3000'];
+var allowedOrigins = ['http://127.0.0.1:5173', 'http://localhost:5173', 'http://localhost:3000', 'http://benthaier.freeboxos.fr:33000'];
 let corsOptions = {
   origin: function(origin: string, callback: Function){
     // allow requests with no origin 
