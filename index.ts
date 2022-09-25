@@ -9,6 +9,7 @@ import {
   Player,
   obtainTokens,
   verifyGameAction,
+  awardCamelToken,
 } from "./game";
 import cors from 'cors';
 import { sendWsMessage } from "./websocket";
@@ -68,6 +69,10 @@ app.post('/:gameId/:playerId', (req: Request, res: Response) => {
     res.status(404).send(`could not find game ${req.params.gameId}`);
     return;
   }
+  if (gameState.gameOver) {
+    res.status(404).send("Game is already over");
+    return;
+  } 
   const player = req.params.playerId;
   if (player as Player != gameState.nextPlayerPlaying) {
     res.status(404).send("Not your turn");
@@ -120,6 +125,10 @@ app.post('/:gameId/:playerId', (req: Request, res: Response) => {
       break;
   }
   gameState.nextPlayerPlaying = gameState.nextPlayerPlaying == Player.Player1 ? Player.Player2 : Player.Player1;
+  const gameOver = gameState.isGameOver();
+  if (gameOver) {
+    gameState = awardCamelToken(gameState);
+  }
   store.set(req.params.gameId, gameState);
   sendWsMessage(req.params.gameId, getGame(req.params.gameId));
   res.json(actionResult);

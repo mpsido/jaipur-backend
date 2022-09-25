@@ -84,6 +84,7 @@ export class GameState {
     board: Card[];
     nextPlayerPlaying: Player;
     tokenBoard: TokenInventory;
+    gameOver: boolean;
 
     constructor() {
         let deck: Card[] = makeDeck();
@@ -93,6 +94,7 @@ export class GameState {
         [player1Cards, deck] = drawCards(deck, 5);
         [player2Cards, deck] = drawCards(deck, 5);
         [boardCards, deck] = drawCards(deck, 5);
+        this.gameOver = false;
         const zeroTokens = {
             "diamond-token": [],
             "gold-token": [],
@@ -131,6 +133,36 @@ export class GameState {
 
     setCurrentPlayerTokens(tokenInv: TokenInventory) {
         this.playersState[this.nextPlayerPlaying as unknown as number - 1].tokens = tokenInv;
+    }
+
+    isGameOver(): boolean {
+        if (this.gameOver === true) {
+            return true;
+        }
+        if (this.deck.length === 0) {
+            this.gameOver = true;
+            return this.gameOver;
+        }
+        let nbSoldOut = 0;
+        const tokenTypesToCheck = [
+            TokenType.Diamond,
+            TokenType.Gold,
+            TokenType.Silver,
+            TokenType.Spice,
+            TokenType.Cloth,
+            TokenType.Leather,
+        ]
+        for (let merchandise of tokenTypesToCheck) {
+            if ((this.tokenBoard[merchandise] as number[]).length === 0) {
+                nbSoldOut += 1;
+            }
+        }
+        if (nbSoldOut >= 3) {
+            this.gameOver = true;
+            return this.gameOver;
+        }
+
+        return false;
     }
 }
 
@@ -335,6 +367,27 @@ export const action = (gameAction: GameAction): ActionResult => {
     } as ActionResult;
     return actionResult;
 };
+
+export const awardCamelToken = (gameState: GameState): GameState => {
+    if (gameState.gameOver === false) {
+        return gameState;
+    }
+    const camelToken = gameState.tokenBoard[TokenType.Camel].pop();
+    if (camelToken === undefined) {
+        console.log("No camel token !");
+        return gameState;
+    }
+    let camelWinner = -1;
+    if (gameState.playersState[0].nbCamels > gameState.playersState[1].nbCamels) {
+        camelWinner = 0;
+    } else if (gameState.playersState[1].nbCamels > gameState.playersState[0].nbCamels) {
+        camelWinner = 1;
+    }
+    if (camelWinner !== -1) {
+        gameState.playersState[camelWinner].tokens[TokenType.Camel].push(camelToken as number);
+    }
+    return gameState;   
+}
 
 export const obtainTokens = (sale: Sale, gameState: GameState): GameState|Error => {
     let tokenType: TokenType;
