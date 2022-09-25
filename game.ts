@@ -208,6 +208,12 @@ export function drawCards(deck: Card[], n: number): [Card[], Card[]] {
     return [deck.slice(0, n), deck.slice(n)];
 };
 
+const takeCamels = (gameAction: GameAction): number => {
+    const nbCamelsInHand = gameAction.handCards.filter((card: Card) => card.cardType == CardType.Camel).length;
+    const nbCamelsInBoard = gameAction.boardCards.filter((card: Card) => card.cardType == CardType.Camel).length;
+    return -(nbCamelsInHand + nbCamelsInBoard);
+}
+
 const exchange = (_boardCards: Card[], _handCards: Card[], nbSelectedCamels: number): [Card[], Card[], string, number] => {
     if (_boardCards.length != (_handCards.length + nbSelectedCamels)) {
         return [_boardCards, _handCards, "need to exchange same number of cards", 0];
@@ -287,6 +293,7 @@ export interface GameAction {
     boardCards: Card[];
     handCards: Card[];
     nbSelectedCamels: number;
+    takeCamels: boolean;
 };
 
 export interface ActionResult {
@@ -338,6 +345,23 @@ export const verifyGameAction = (gameState: GameState, gameAction: GameAction): 
 }
 
 export const action = (gameAction: GameAction): ActionResult => {
+    if (gameAction.takeCamels) {
+        const consumedCamels = takeCamels(gameAction);
+        let errorMsg = "";
+        if (consumedCamels === 0) {
+            errorMsg = "No camels to take";
+        }
+        return {
+            board: gameAction.boardCards.filter((card: Card) => card.cardType !== CardType.Camel),
+            hand: gameAction.handCards.filter((card: Card) => card.cardType !== CardType.Camel), 
+            errorMsg, 
+            consumedCamels,
+            selling: {
+                type: "" as CardType,
+                qty: 0,
+            } as Sale,
+        } as ActionResult;
+    }
     let selectedDeck = gameAction.boardCards.filter(card => card.selected);
     let selectedHand = gameAction.handCards.filter(card => card.selected);
     let remainingBoard = gameAction.boardCards.filter(card => !card.selected);
