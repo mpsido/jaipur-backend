@@ -38,9 +38,9 @@ let corsOptions = {
 
 app.use(cors(corsOptions));
 
-app.get('/:gameId', (req: Request, res: Response) => {
+app.get('/game/:gameId/:playerId', (req: Request, res: Response) => {
   console.log(req.params.gameId);
-  const game = getGame(req.params.gameId);
+  const game = getGame(req.params.gameId, parseInt(req.params.playerId));
   if (game instanceof Error) {
     res.status(404).send((game as Error).message);
     return;
@@ -53,15 +53,12 @@ app.get('/:gameId', (req: Request, res: Response) => {
 
 app.get('/start/:gameId', (req: Request, res: Response) => {
   console.log("Start game with id: ", req.params.gameId);
-  const game = startGame(req.params.gameId);
-  if (game instanceof Error) {
-    res.status(404).send((game as Error).message);
+  const err = startGame(req.params.gameId);
+  if (err instanceof Error) {
+    res.status(404).send((err as Error).message);
     return;
   }
-
-  const gameJson = JSON.stringify(game as GameState);
-  res.contentType("application/json");
-  res.status(200).send(gameJson);
+  res.status(200).send("Game created");
 });
 
 app.post('/:gameId/:playerId', (req: Request, res: Response) => {
@@ -134,7 +131,7 @@ app.post('/:gameId/:playerId', (req: Request, res: Response) => {
     });
   }
   store.set(req.params.gameId, gameState);
-  sendWsMessage(req.params.gameId, getGame(req.params.gameId));
+  sendWsMessage(req.params.gameId, getGame(req.params.gameId, parseInt(req.params.playerId)));
   res.json(actionResult);
 });
 

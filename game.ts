@@ -1,6 +1,6 @@
 import { shuffleArray } from "./util";
 
-enum CardType {
+export enum CardType {
     Diamond = "diamond-card",
     Gold = "gold-card",
     Silver = "silver-card",
@@ -8,6 +8,7 @@ enum CardType {
     Spice = "spice-card",
     Leather = "leather-card",
     Camel = "camel-card",
+    Jaipur = "jaipur-card",
     Undefined = "",
 }
 
