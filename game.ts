@@ -199,8 +199,47 @@ export interface ActionResult {
     selling: Sale, 
 };
 
+export const verifyGameAction = (gameState: GameState, gameAction: GameAction): Error|null => {
+    let hand: Card[];
+    let nbCamels: number;
+    switch (gameState.nextPlayerPlaying) {
+        case Player.Player1:
+            hand = gameState.player1State.cards;
+            nbCamels = gameState.player1State.nbCamels;
+            break;
+        case Player.Player2:
+            hand = gameState.player2State.cards;
+            nbCamels = gameState.player2State.nbCamels;
+            break;
+    }
+    if (gameAction.nbSelectedCamels > nbCamels) {
+        return new Error(`Cannot select ${gameAction.nbSelectedCamels} camels only have ${nbCamels}`);
+    }
+    var BreakException = {};
+    let handVerficiation: Error|null = null;
+    gameAction.handCards.forEach((card: Card, i: number) => {
+        if (card.cardType !== hand[i].cardType) {
+            handVerficiation = new Error("This is not your hand");
+            throw BreakException;
+        }
+    });
+    if (handVerficiation !== null) {
+        return handVerficiation;
+    }
+    let boardVerification: Error|null = null;
+    gameAction.boardCards.forEach((card: Card, i: number) => {
+        if (card.cardType !== gameState.board[i].cardType) {
+            boardVerification = new Error("This is not your hand");
+            throw BreakException;
+        }
+    });
+    if (boardVerification !== null) {
+        return boardVerification;
+    }
+    return null;
+}
+
 export const action = (gameAction: GameAction): ActionResult => {
-    // TODO verify that the selected cards are in the player's hands and b
     let selectedDeck = gameAction.boardCards.filter(card => card.selected);
     let selectedHand = gameAction.handCards.filter(card => card.selected);
     let remainingBoard = gameAction.boardCards.filter(card => !card.selected);

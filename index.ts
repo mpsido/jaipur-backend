@@ -2,7 +2,14 @@ import express, { Express, Request, Response } from 'express';
 import dotenv from 'dotenv';
 import bodyParser from 'body-parser';
 import { store, startGame, getGame} from "./store";
-import { action, drawCards, GameState, Player, obtainTokens } from "./game";
+import {
+  action,
+  drawCards,
+  GameState,
+  Player,
+  obtainTokens,
+  verifyGameAction,
+} from "./game";
 import cors from 'cors';
 import { sendWsMessage } from "./websocket";
 
@@ -66,7 +73,12 @@ app.post('/:gameId/:playerId', (req: Request, res: Response) => {
     res.status(404).send("Not your turn");
     return;
   }
-  console.log(req.body);
+  let checkAction = verifyGameAction(gameState, req.body);
+  if (checkAction !== null) {
+    res.status(404).send((checkAction as Error).message);
+    return;
+  }
+
   const actionResult = action(req.body);
   console.log(actionResult);
 
