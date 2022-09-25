@@ -46,6 +46,7 @@ const deckParameters: Map<CardType, number> = new Map<CardType, number>([
 ]);
 
 export const maxCardsInHand: number = 7;
+export const maxTakeCards: number = 3;
 const saleQuotas: Map<CardType, number> = new Map<CardType, number>([
     ["diamond-card" as CardType, 2],
     ["gold-card" as CardType, 2],
@@ -232,6 +233,9 @@ const takeFromDeck = (_boardCards: Card[], _handCards: Card[], nbCardsInHand: nu
     if (_handCards.length > 0) {
         console.log("Hand", _boardCards);
         return [_boardCards, _handCards, "cannot take from deck when hand cards are selected", 0];
+    }
+    if (_boardCards.length > maxTakeCards) {
+        return [_boardCards, _handCards, "cannot take more than three cards", 0];
     }
     if (nbCardsInHand + _boardCards.length > maxCardsInHand) {
         return [_boardCards, _handCards, "that would be too much cards in hand", 0];
