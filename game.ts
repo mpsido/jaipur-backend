@@ -110,7 +110,7 @@ export interface TokenInventory {
 
 export class GameState {
     playersState: PlayerState[];
-    deck: Card[]; // TODO the card selections should not be part of the game state
+    deck: Card[];
     board: Card[];
     nextPlayerPlaying: Player;
     tokenBoard: TokenInventory;
@@ -212,7 +212,6 @@ const exchange = (_boardCards: Card[], _handCards: Card[], nbSelectedCamels: num
     if (_boardCards.length != (_handCards.length + nbSelectedCamels)) {
         return [_boardCards, _handCards, "need to exchange same number of cards", 0];
     }
-    // TODO exchange with camels is not implemented
     if (nbSelectedCamels == 0) {
         return [_handCards, _boardCards, "", nbSelectedCamels];
     }
