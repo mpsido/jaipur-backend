@@ -10,6 +10,7 @@ import {
   obtainTokens,
   verifyGameAction,
   awardCamelToken,
+  PlayerState,
 } from "./game";
 import cors from 'cors';
 import { sendWsMessage } from "./websocket";
@@ -128,6 +129,9 @@ app.post('/:gameId/:playerId', (req: Request, res: Response) => {
   const gameOver = gameState.isGameOver();
   if (gameOver) {
     gameState = awardCamelToken(gameState);
+    gameState.playersState.map((playerState: PlayerState) => {
+      playerState.computeScore();
+    });
   }
   store.set(req.params.gameId, gameState);
   sendWsMessage(req.params.gameId, getGame(req.params.gameId));

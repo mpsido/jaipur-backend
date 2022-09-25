@@ -54,10 +54,39 @@ const saleQuotas: Map<CardType, number> = new Map<CardType, number>([
     ["leather-card" as CardType, 1],
 ]);
 
-export interface PlayerState {
+export class PlayerState {
     cards: Card[];
     nbCamels: number;
     tokens: TokenInventory;
+    score: number;
+
+    constructor(cards: Card[]) {
+        const zeroTokens = {
+            "diamond-token": [],
+            "gold-token": [],
+            "silver-token": [],
+            "cloth-token": [],
+            "spice-token": [],
+            "leather-token": [],
+            "bonus3-token": [],
+            "bonus4-token": [],
+            "bonus5-token": [],
+            "camel-token": [],
+        }
+        this.cards = cards;
+        this.nbCamels = 0;
+        this.tokens = zeroTokens;
+        this.score = 0;
+    }
+
+    computeScore(): number {
+        let score = 0;
+        for (let tokenType of Object.keys(this.tokens)) {
+            score += this.tokens[tokenType as unknown as TokenType].reduce((partialSum, a) => partialSum + a, 0);
+        }
+        this.score = score;
+        return this.score;
+    }
 }
 
 export enum Player {
@@ -95,28 +124,10 @@ export class GameState {
         [player2Cards, deck] = drawCards(deck, 5);
         [boardCards, deck] = drawCards(deck, 5);
         this.gameOver = false;
-        const zeroTokens = {
-            "diamond-token": [],
-            "gold-token": [],
-            "silver-token": [],
-            "cloth-token": [],
-            "spice-token": [],
-            "leather-token": [],
-            "bonus3-token": [],
-            "bonus4-token": [],
-            "bonus5-token": [],
-            "camel-token": [],
-        }
-        this.playersState = [{
-            cards: player1Cards,
-            nbCamels: 0,
-            tokens: zeroTokens,
-        },
-        {
-            cards: player2Cards,
-            nbCamels: 0,
-            tokens: zeroTokens,
-        }],
+        this.playersState = [
+            new PlayerState(player1Cards),
+            new PlayerState(player2Cards),
+        ],
         this.deck = deck;
         this.board = boardCards;
         this.nextPlayerPlaying=  Player.Player1;
