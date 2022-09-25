@@ -91,10 +91,10 @@ app.post('/:gameId/:playerId', (req: Request, res: Response) => {
   gameState.board = actionResult.board;
   switch (gameState.nextPlayerPlaying) {
     case Player.Player1:
-      gameState.player1State.cards = actionResult.hand;
+      gameState.currentPlayer().cards = actionResult.hand;
       break;
     case Player.Player2:
-      gameState.player2State.cards = actionResult.hand;
+      gameState.currentPlayer().cards = actionResult.hand;
       break;
   }
   if (actionResult.selling.qty > 0) {
@@ -113,10 +113,10 @@ app.post('/:gameId/:playerId', (req: Request, res: Response) => {
   }
   switch (gameState.nextPlayerPlaying) {
     case Player.Player1:
-      gameState.player1State.nbCamels -= actionResult.consumedCamels;
+      gameState.currentPlayer().nbCamels -= actionResult.consumedCamels;
       break;
     case Player.Player2:
-      gameState.player2State.nbCamels -= actionResult.consumedCamels;
+      gameState.currentPlayer().nbCamels -= actionResult.consumedCamels;
       break;
   }
   gameState.nextPlayerPlaying = gameState.nextPlayerPlaying == Player.Player1 ? Player.Player2 : Player.Player1;

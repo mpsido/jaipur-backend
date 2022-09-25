@@ -78,13 +78,60 @@ export interface TokenInventory {
     "camel-token": number[];
 };
 
-export interface GameState {
-    player1State: PlayerState; // TODO store the player state in an array
-    player2State: PlayerState;
+export class GameState {
+    playersState: PlayerState[];
     deck: Card[]; // TODO the card selections should not be part of the game state
     board: Card[];
     nextPlayerPlaying: Player;
     tokenBoard: TokenInventory;
+
+    constructor() {
+        let deck: Card[] = makeDeck();
+        let player1Cards: Card[] = new Array<Card>();
+        let player2Cards: Card[] = new Array<Card>();
+        let boardCards: Card[] = new Array<Card>();
+        [player1Cards, deck] = drawCards(deck, 5);
+        [player2Cards, deck] = drawCards(deck, 5);
+        [boardCards, deck] = drawCards(deck, 5);
+        const zeroTokens = {
+            "diamond-token": [],
+            "gold-token": [],
+            "silver-token": [],
+            "cloth-token": [],
+            "spice-token": [],
+            "leather-token": [],
+            "bonus3-token": [],
+            "bonus4-token": [],
+            "bonus5-token": [],
+            "camel-token": [],
+        }
+        this.playersState = [{
+            cards: player1Cards,
+            nbCamels: 0,
+            tokens: zeroTokens,
+        },
+        {
+            cards: player2Cards,
+            nbCamels: 0,
+            tokens: zeroTokens,
+        }],
+        this.deck = deck;
+        this.board = boardCards;
+        this.nextPlayerPlaying=  Player.Player1;
+        this.tokenBoard = makeTokenBoard();
+    }
+
+    currentPlayer() {
+        return this.playersState[this.nextPlayerPlaying as unknown as number - 1];
+    }
+
+    setCurrentPlayerState(playerState: PlayerState) {
+        this.playersState[this.nextPlayerPlaying as unknown as number - 1] = playerState;
+    }
+
+    setCurrentPlayerTokens(tokenInv: TokenInventory) {
+        this.playersState[this.nextPlayerPlaying as unknown as number - 1].tokens = tokenInv;
+    }
 }
 
 export function makeTokenBoard(): TokenInventory {
@@ -204,12 +251,12 @@ export const verifyGameAction = (gameState: GameState, gameAction: GameAction): 
     let nbCamels: number;
     switch (gameState.nextPlayerPlaying) {
         case Player.Player1:
-            hand = gameState.player1State.cards;
-            nbCamels = gameState.player1State.nbCamels;
+            hand = gameState.currentPlayer().cards;
+            nbCamels = gameState.currentPlayer().nbCamels;
             break;
         case Player.Player2:
-            hand = gameState.player2State.cards;
-            nbCamels = gameState.player2State.nbCamels;
+            hand = gameState.currentPlayer().cards;
+            nbCamels = gameState.currentPlayer().nbCamels;
             break;
     }
     if (gameAction.nbSelectedCamels > nbCamels) {
@@ -309,17 +356,7 @@ export const obtainTokens = (sale: Sale, gameState: GameState): GameState|Error 
     if (minSale === undefined) {
         return new Error(`Could not find sale quota for type ${sale.type}`);
     }
-    let playerTokens: TokenInventory;
-    switch (gameState.nextPlayerPlaying) {
-        case Player.Player1:
-            playerTokens = gameState.player1State.tokens;
-            break;
-        case Player.Player2:
-            playerTokens = gameState.player2State.tokens;
-            break;
-        default:
-            return new Error(`Don't know which player is that: ${gameState.nextPlayerPlaying}`);
-    }
+    let playerTokens = gameState.currentPlayer().tokens;
     let playerTokensOfThisType: number[];
     playerTokensOfThisType = playerTokens[tokenType] as number[];
     let tokens = gameState.tokenBoard[tokenType];
@@ -338,16 +375,7 @@ export const obtainTokens = (sale: Sale, gameState: GameState): GameState|Error 
         playerTokensOfThisType.push(obtainedToken);
     }
     playerTokens[tokenType] = playerTokensOfThisType;
-    switch (gameState.nextPlayerPlaying) {
-        case Player.Player1:
-            gameState.player1State.tokens = playerTokens;
-            break;
-        case Player.Player2:
-            gameState.player2State.tokens = playerTokens;
-            break;
-        default:
-            return new Error(`Don't know which player is that: ${gameState.nextPlayerPlaying}`);
-    }
+    gameState.setCurrentPlayerTokens(playerTokens);
     gameState.tokenBoard[tokenType] = tokens as number[];
     console.log("Updated tokenBoard", gameState.tokenBoard);
     return gameState;
