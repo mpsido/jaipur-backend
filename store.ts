@@ -41,6 +41,12 @@ export const getGame = (gameIndex: string, player: number): GameState|Error => {
         ...gameState,
         deck: [] as Card[],
         playersState,
+        tokenBoard: {
+            ...gameState.tokenBoard,
+            "bonus3-token": [gameState.tokenBoard["bonus3-token"].length],
+            "bonus4-token": [gameState.tokenBoard["bonus4-token"].length],
+            "bonus5-token": [gameState.tokenBoard["bonus5-token"].length],
+        }
     } as GameState; //send the game state (except the deck because the players aren't supposed to know it)
 };
 
