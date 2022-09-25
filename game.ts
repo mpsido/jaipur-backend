@@ -168,7 +168,15 @@ const exchange = (_boardCards: Card[], _handCards: Card[], nbSelectedCamels: num
     if (_boardCards.length != (_handCards.length + nbSelectedCamels)) {
         return [_boardCards, _handCards, "need to exchange same number of cards", 0];
     }
-    return [_handCards, _boardCards, "", nbSelectedCamels];
+    // TODO exchange with camels is not implemented
+    if (nbSelectedCamels == 0) {
+        return [_handCards, _boardCards, "", nbSelectedCamels];
+    }
+    let camelsInBoard: Card[] = Array(nbSelectedCamels).fill({
+        cardType: CardType.Camel,
+        selected: false,
+    } as Card);
+    return [[..._handCards, ...camelsInBoard], _boardCards, "", nbSelectedCamels];
 };
 
 const takeFromDeck = (_boardCards: Card[], _handCards: Card[], nbCardsInHand: number): [Card[], Card[], string, number] => {
@@ -299,11 +307,11 @@ export const action = (gameAction: GameAction): ActionResult => {
         type: "" as CardType,
         qty: 0,
     }
-    if (selectedDeck.length > 0 && selectedHand.length > 0) {
+    if (selectedDeck.length > 0 && (selectedHand.length > 0 || gameAction.nbSelectedCamels > 0)) {
         [putInDeck, putInHand, errorMsg, consumedCamels] = exchange(selectedDeck, selectedHand, gameAction.nbSelectedCamels);
         console.log("exchange", putInDeck, putInHand);
     }
-    else if (selectedDeck.length > 0) {
+    else if (selectedDeck.length > 0 && gameAction.nbSelectedCamels == 0) {
         [putInDeck, putInHand, errorMsg, consumedCamels] = takeFromDeck(selectedDeck, selectedHand, gameAction.handCards.length);
         console.log("takeFromDeck", putInDeck, putInHand);
     }
