@@ -48,10 +48,10 @@ export const maxCardsInHand: number = 7;
 const saleQuotas: Map<CardType, number> = new Map<CardType, number>([
     ["diamond-card" as CardType, 2],
     ["gold-card" as CardType, 2],
-    ["silver-card" as CardType, 3],
-    ["cloth-card" as CardType, 3],
-    ["spice-card" as CardType, 4],
-    ["leather-card" as CardType, 4],
+    ["silver-card" as CardType, 2],
+    ["cloth-card" as CardType, 1],
+    ["spice-card" as CardType, 1],
+    ["leather-card" as CardType, 1],
 ]);
 
 export interface PlayerState {
