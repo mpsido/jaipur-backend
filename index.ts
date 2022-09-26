@@ -1,7 +1,7 @@
 import express, { Express, Request, Response } from 'express';
 import dotenv from 'dotenv';
 import bodyParser from 'body-parser';
-import { store, startGame, getGame} from "./store";
+import { store, startGame, getGame, restartGame } from "./store";
 import {
   action,
   drawCards,
@@ -55,6 +55,16 @@ app.get('/game/:gameId/:playerId', (req: Request, res: Response) => {
 app.get('/start/:gameId', (req: Request, res: Response) => {
   console.log("Start game with id: ", req.params.gameId);
   const err = startGame(req.params.gameId);
+  if (err instanceof Error) {
+    res.status(404).send((err as Error).message);
+    return;
+  }
+  res.status(200).send("Game created");
+});
+
+app.get('/restart/:gameId', (req: Request, res: Response) => {
+  console.log("Start game with id: ", req.params.gameId);
+  const err = restartGame(req.params.gameId);
   if (err instanceof Error) {
     res.status(404).send((err as Error).message);
     return;
@@ -140,5 +150,5 @@ app.post('/:gameId/:playerId', (req: Request, res: Response) => {
 });
 
 app.listen(port, () => {
-  console.log(`⚡️[server]: Server is running at https://localhost:${port}`);
+  console.log(`⚡️[server]: Server is listening on port ${port}`);
 });

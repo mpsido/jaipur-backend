@@ -58,3 +58,15 @@ export const startGame = (gameIndex: string): void|Error => {
     store.set(gameIndex, gameState);
     return;
 }
+
+export const restartGame = (gameIndex: string): void|Error => {
+    if (!store.has(gameIndex)) {
+        return new Error("Game does not exists");
+    }
+    const gameState = store.get(gameIndex) as GameState;
+    if (!gameState.gameOver) {
+        return new Error("Game is not over yet");
+    }
+    store.set(gameIndex, new GameState());
+    return;
+}
