@@ -13,7 +13,7 @@ import {
   PlayerState,
 } from "./game";
 import cors from 'cors';
-import { sendWsMessage } from "./websocket";
+import { sendWsMessage, MsgType } from "./websocket";
 
 dotenv.config();
 
@@ -38,39 +38,6 @@ let corsOptions = {
 } as cors.CorsOptions;
 
 app.use(cors(corsOptions));
-
-app.get('/game/:gameId/:playerId', (req: Request, res: Response) => {
-  console.log(req.params.gameId);
-  const game = getGame(req.params.gameId, parseInt(req.params.playerId));
-  if (game instanceof Error) {
-    res.status(404).send((game as Error).message);
-    return;
-  }
-  const gameJson = JSON.stringify(game as GameState);
-  res.contentType("application/json");
-  res.status(200).send(gameJson);
-});
-
-
-app.get('/start/:gameId', (req: Request, res: Response) => {
-  console.log("Start game with id: ", req.params.gameId);
-  const err = startGame(req.params.gameId);
-  if (err instanceof Error) {
-    res.status(404).send((err as Error).message);
-    return;
-  }
-  res.status(200).send("Game created");
-});
-
-app.get('/restart/:gameId', (req: Request, res: Response) => {
-  console.log("Start game with id: ", req.params.gameId);
-  const err = restartGame(req.params.gameId);
-  if (err instanceof Error) {
-    res.status(404).send((err as Error).message);
-    return;
-  }
-  res.status(200).send("Game created");
-});
 
 app.post('/:gameId/:playerId', (req: Request, res: Response) => {
   const gameId = req.params.gameId;
@@ -143,8 +110,8 @@ app.post('/:gameId/:playerId', (req: Request, res: Response) => {
     });
   }
   store.set(gameId, gameState);
-  sendWsMessage(gameId, 1, getGame(gameId, 1));
-  sendWsMessage(gameId, 2, getGame(gameId, 2));
+  sendWsMessage(gameId, 1, MsgType.GameState, getGame(gameId, 1));
+  sendWsMessage(gameId, 2, MsgType.GameState, getGame(gameId, 2));
   res.json(actionResult);
 });
 
