@@ -5,7 +5,7 @@ import { getGame, startGame, restartGame, store } from './store';
 
 
 const server = new WebSocket.Server({
-    port: 3001
+    port: 3000
 });
 
 export enum MsgType {
