@@ -88,22 +88,22 @@ server.on('connection', function(socket: WebSocket) {
               case MsgType.GameAction:
                   let gameState = store.get(gameId);
                   if (!gameState) {
-                      sendWsMessage(gameId, 1, MsgType.Error, { error: `could not find game ${gameId}` });
+                      sendWsMessage(gameId, player, MsgType.Error, { error: `could not find game ${gameId}` });
                       break;
                   }
                   if (!message.gameAction) {
-                      sendWsMessage(gameId, 2, MsgType.Error, { error: "Game action is missing" });
+                      sendWsMessage(gameId, player, MsgType.Error, { error: "Game action is missing" });
                       break;
                   }
                   const resultOrErr = playGameAction(gameId, selectedPlayer, gameState, message.gameAction);
                   if (resultOrErr instanceof Error) {
-                      sendWsMessage(gameId, 2, MsgType.Error, { error: resultOrErr.message });
+                      sendWsMessage(gameId, player, MsgType.Error, { error: resultOrErr.message });
                       break;
                   }
                   store.set(gameId, resultOrErr.gameState);
                   sendWsMessage(gameId, player, MsgType.GameAction, { "actionResult": resultOrErr.actionResult });
-                  sendWsMessage(gameId, 1, MsgType.GameState, getGame(gameId, 1));
-                  sendWsMessage(gameId, 2, MsgType.GameState, getGame(gameId, 2));
+                  sendGameState(gameId, 1);
+                  sendGameState(gameId, 2);
                   break;
           }
         } catch (err) {
