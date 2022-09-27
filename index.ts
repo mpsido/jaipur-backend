@@ -79,7 +79,8 @@ server.on('connection', function(socket: WebSocket) {
                       sendWsMessage(gameId, 1, MsgType.Error, { error: restartErr.message });
                       sendWsMessage(gameId, 2, MsgType.Error, { error: restartErr.message });
                   }
-                  sendGameState(gameId, player);
+                  sendGameState(gameId, 1);
+                  sendGameState(gameId, 2);
                   break;
               case MsgType.GameState:
                   sendGameState(gameId, player);
