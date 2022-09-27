@@ -1,125 +1,96 @@
+import express, { Express, Request, Response } from 'express';
+import dotenv from 'dotenv';
+import bodyParser from 'body-parser';
+import { store, startGame, getGame, restartGame } from "./store";
+import {
+  GameState,
+  playGameAction,
+} from "./game";
+import cors from 'cors';
+import { MsgType, sendWsMessage } from "./websocket";
 
-import { WebSocket } from 'ws';
-import { playGameAction } from './game';
-import { getGame, startGame, restartGame, store } from './store';
+dotenv.config();
 
+const app: Express = express();
+const port = process.env.PORT;
 
-const server = new WebSocket.Server({
-    port: 3000
+app.use(bodyParser.json());
+var allowedOrigins = ['http://127.0.0.1:5173', 'http://localhost:5173', 'http://localhost:3000'];
+let corsOptions = {
+  origin: function(origin: string, callback: Function){
+    // allow requests with no origin 
+    // (like mobile apps or curl requests)
+    if(!origin) return callback(null, true);
+    if(allowedOrigins.indexOf(origin) === -1){
+      var msg = 'The CORS policy for this site does not ' +
+                'allow access from the specified Origin.' + `Origin is ${origin}`;
+      console.log(msg);
+      return callback(new Error(msg), false);
+    }
+    return callback(null, true);
+  }
+} as cors.CorsOptions;
+
+app.use(cors(corsOptions));
+
+app.get('/game/:gameId/:playerId', (req: Request, res: Response) => {
+  console.log(req.params.gameId);
+  const game = getGame(req.params.gameId, parseInt(req.params.playerId));
+  if (game instanceof Error) {
+    res.status(404).send((game as Error).message);
+    return;
+  }
+  const gameJson = JSON.stringify(game as GameState);
+  res.contentType("application/json");
+  res.status(200).send(gameJson);
 });
 
-export enum MsgType {
-    Init = "init",
-    Error = "error",
-    RestartGame = "restartGame",
-    GameState = "gameState",
-    GameAction = "gameAction",
-}
 
-const initGame = (socket: WebSocket, player: number, gameId: string): void => {
-    let sockets = socketMap.get(gameId);
-    if (sockets === undefined) {
-        sockets = new Map<number, WebSocket>();
-    }
-    sockets.set(player, socket);
-    socketMap.set(gameId, sockets as Map<number, WebSocket>);
-    console.log(`Add gameId to socket list ${gameId} for player ${player}`);
-}
-  
-let socketMap = new Map<string, Map<number, WebSocket> >;
-
-const sendGameState = (gameId: string, player: number): void => {
-    const gs = getGame(gameId, player);
-    if (gs instanceof Error) {
-        sendWsMessage(gameId, player, MsgType.Error, { error: gs.message });
-        return;
-    }
-    sendWsMessage(gameId, player, MsgType.GameState, gs);
-}
-
-server.on('connection', function(socket: WebSocket) {
-    // When you receive a message, send that message to every socket.
-    socket.on('message', function(msg: string) {
-        const message = JSON.parse(msg);
-        const msgType = message.msgType;
-        if (!msgType) {
-            console.log("not enough information to establish websocket link");
-            return;
-        }
-        const gameId = message.gameId;
-        const selectedPlayer = message.selectedPlayer;
-        if (!gameId || gameId == "") {
-            console.log("not enough information to init game");
-            return;
-        }
-        let player = 0;
-        if (selectedPlayer) {
-            try {
-                player = parseInt(selectedPlayer);
-                if (player != 1 && player != 2) {
-                    console.log(`Cannot use player ${player}`);
-                    return;
-                }
-            } catch (err) {
-                console.log(err);
-                return;
-            }
-        }
-        console.log('Received message on websocket ', message, gameId, selectedPlayer);
-        try {
-          switch (msgType as MsgType) {
-              case MsgType.Init:
-                  initGame(socket, player, gameId);
-                  startGame(gameId);
-                  sendGameState(gameId, player);
-                  break;
-              case MsgType.RestartGame:
-                  const restartErr = restartGame(gameId);
-                  if (restartErr) {
-                      sendWsMessage(gameId, 1, MsgType.Error, { error: restartErr.message });
-                      sendWsMessage(gameId, 2, MsgType.Error, { error: restartErr.message });
-                  }
-                  sendGameState(gameId, 1);
-                  sendGameState(gameId, 2);
-                  break;
-              case MsgType.GameState:
-                  sendGameState(gameId, player);
-                  break;
-              case MsgType.GameAction:
-                  let gameState = store.get(gameId);
-                  if (!gameState) {
-                      sendWsMessage(gameId, player, MsgType.Error, { error: `could not find game ${gameId}` });
-                      break;
-                  }
-                  if (!message.gameAction) {
-                      sendWsMessage(gameId, player, MsgType.Error, { error: "Game action is missing" });
-                      break;
-                  }
-                  const resultOrErr = playGameAction(gameId, selectedPlayer, gameState, message.gameAction);
-                  if (resultOrErr instanceof Error) {
-                      sendWsMessage(gameId, player, MsgType.Error, { error: resultOrErr.message });
-                      break;
-                  }
-                  store.set(gameId, resultOrErr.gameState);
-                  sendWsMessage(gameId, player, MsgType.GameAction, { "actionResult": resultOrErr.actionResult });
-                  sendGameState(gameId, 1);
-                  sendGameState(gameId, 2);
-                  break;
-          }
-        } catch (err) {
-          console.error(err);
-        }
-    });
-    // When a socket closes, or disconnects, remove it from the array.
-    socket.on('close', function() {});
+app.get('/start/:gameId', (req: Request, res: Response) => {
+  console.log("Start game with id: ", req.params.gameId);
+  const err = startGame(req.params.gameId);
+  if (err instanceof Error) {
+    res.status(404).send((err as Error).message);
+    return;
+  }
+  res.status(200).send("Game created");
 });
 
-export const sendWsMessage = (gameId: string, playerId: number, msgType: MsgType, msg: any) => {
-    let sockets = socketMap.get(gameId);
-    if (sockets === undefined) {
-        console.log(`Don't have socket list for gameId ${gameId}`);
-        return;
-    }
-    console.log("Websocket sending game state to player", playerId, msg);
-    (sockets as Map<number, WebSocket>).get(playerId)?.send(JSON.stringify({ ...msg, msgType }));
-}
+app.get('/restart/:gameId', (req: Request, res: Response) => {
+  console.log("Start game with id: ", req.params.gameId);
+  const err = restartGame(req.params.gameId);
+  if (err instanceof Error) {
+    res.status(404).send((err as Error).message);
+    return;
+  }
+  res.status(200).send("Game created");
+});
+
+app.post('/:gameId/:playerId', (req: Request, res: Response) => {
+  const gameId = req.params.gameId;
+  let gameState = store.get(gameId);
+  if (!gameState) {
+    res.status(404).send(`could not find game ${gameId}`);
+    return;
+  }
+  const player = req.params.playerId;
+  let resultOrErr = playGameAction(gameId, player, gameState, req.body);
+  if (resultOrErr instanceof Error) {
+    res.status(404).send((resultOrErr as Error).message);
+    return;
+  }
+  const actionResult = resultOrErr.actionResult;
+  if (actionResult.errorMsg != "") {
+    res.status(404).send(actionResult.errorMsg);
+    return;
+  }
+  const nextGameState = resultOrErr.gameState;
+  store.set(gameId, nextGameState);
+  sendWsMessage(gameId, 1, MsgType.GameState, getGame(gameId, 1));
+  sendWsMessage(gameId, 2, MsgType.GameState, getGame(gameId, 2));
+  res.json(actionResult);
+});
+
+app.listen(port, () => {
+  console.log(`⚡️[server]: Server is listening on port ${port}`);
+});
