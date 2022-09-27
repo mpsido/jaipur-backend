@@ -480,3 +480,64 @@ export const obtainTokens = (sale: Sale, gameState: GameState): GameState|Error 
     console.log("Updated tokenBoard", gameState.tokenBoard);
     return gameState;
 };
+
+export const playGameAction = (gameId: string, player: string, gameState: GameState, gameAction: GameAction)
+: { gameState: GameState, actionResult: ActionResult }|Error => {
+  if (gameState.gameOver) {
+    return new Error("Game is already over");
+  }
+  if (player as Player != gameState.nextPlayerPlaying) {
+    return new Error("Not your turn");
+  }
+  let checkAction = verifyGameAction(gameState, gameAction);
+  if (checkAction !== null) {
+    return (checkAction as Error);
+  }
+
+  const actionResult = action(gameAction);
+  console.log(actionResult);
+
+  if (actionResult.errorMsg != "") {
+    return new Error(actionResult.errorMsg);
+  }
+
+  gameState.board = actionResult.board;
+  switch (gameState.nextPlayerPlaying) {
+    case Player.Player1:
+      gameState.currentPlayer().cards = actionResult.hand;
+      break;
+    case Player.Player2:
+      gameState.currentPlayer().cards = actionResult.hand;
+      break;
+  }
+  if (actionResult.selling.qty > 0) {
+    let gsOrError = obtainTokens(actionResult.selling, gameState);
+    if (gsOrError instanceof Error) {
+        return gsOrError as Error;
+    }
+    gameState = gsOrError as GameState;
+  }
+  if (gameState.board.length < 5) {
+    let [extraCards, deck] = drawCards(gameState.deck, 5 - gameState.board.length);
+    console.log("Add to deck", extraCards, gameState.board);
+    gameState.deck = deck;
+    gameState.board = [...gameState.board, ...extraCards];
+  }
+  switch (gameState.nextPlayerPlaying) {
+    case Player.Player1:
+      gameState.currentPlayer().nbCamels -= actionResult.consumedCamels;
+      break;
+    case Player.Player2:
+      gameState.currentPlayer().nbCamels -= actionResult.consumedCamels;
+      break;
+  }
+  gameState.nextPlayerPlaying = gameState.nextPlayerPlaying == Player.Player1 ? Player.Player2 : Player.Player1;
+  const gameOver = gameState.isGameOver();
+  if (gameOver) {
+    gameState = awardCamelToken(gameState);
+    gameState.playersState.map((playerState: PlayerState) => {
+      playerState.computeScore();
+    });
+  }
+  return { gameState, actionResult };
+}
