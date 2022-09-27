@@ -442,7 +442,7 @@ export const obtainTokens = (sale: Sale, gameState: GameState): GameState|Error 
     let playerTokensOfThisType: number[];
     playerTokensOfThisType = playerTokens[tokenType] as number[];
     let tokens = gameState.tokenBoard[tokenType];
-    if (tokens === undefined || tokens?.length === 0) {
+    if (tokens === undefined) {
         return new Error(`No token of type ${sale.type} to distribute`);
     }
     if (sale.qty < minSale) {
