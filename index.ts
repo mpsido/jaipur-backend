@@ -143,9 +143,8 @@ app.post('/:gameId/:playerId', (req: Request, res: Response) => {
     });
   }
   store.set(gameId, gameState);
-  let playerIdx = parseInt(player);
-  sendWsMessage(gameId, playerIdx, getGame(gameId, playerIdx % 2));
-  sendWsMessage(gameId, playerIdx == 1 ? 2 : 1, getGame(gameId, playerIdx - 1));
+  sendWsMessage(gameId, 1, getGame(gameId, 1));
+  sendWsMessage(gameId, 2, getGame(gameId, 2));
   res.json(actionResult);
 });
 
